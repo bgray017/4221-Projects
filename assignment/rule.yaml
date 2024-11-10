@@ -1,0 +1,26 @@
+rules:
+  - id: java-information-vulnerabilities
+    languages: [java]
+    message: |
+      XSS and Information Leakage vulnerability detected: User input is processed without proper sanitization.
+    severity: WARNING
+    mode: taint
+    pattern-sources:
+      - pattern: '$INPUT = $REQUEST.getParameter("userId");'
+      - pattern: '$INPUT = $REQUEST.getParameter("comment");'
+      - pattern: '$INPUT = $REQUEST.getParameter("search");'
+      - pattern: "$INPUT = request.getParameter(...);"
+    pattern-sinks:
+      - pattern: '$RESPONSE.getWriter().println("..." + $INPUT + "...");'
+      - pattern: '$RESPONSE.getWriter().print("..." + $INPUT + "...");'
+      - pattern: "printComment($RESPONSE, $INPUT);"
+      - pattern: "executeSearch($INPUT);"
+      - pattern: "processUserId($INPUT);"
+      - pattern: "storeComment($INPUT);"
+    pattern-sanitizers:
+      - pattern: "Encode.forHtml($INPUT);"
+      - pattern: "StringEscapeUtils.escapeHtml4($INPUT);"
+      - pattern: |
+          if ($INPUT.matches("^[a-zA-Z0-9_-]{3,32}$")) {
+            ...
+          }
